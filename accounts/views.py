@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from vendor.forms import VendorForm
 from .forms import UserForm
 from .models import User, UserProfile
-from .utils import detectUser
+from .utils import detectUser, send_verification_email
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages, auth
 from django.core.exceptions import PermissionDenied
@@ -48,6 +48,9 @@ def registerUser(request):
             user = User.objects.create_user(first_name=first_name, last_name=last_name, username=username, email=email, password=password)
             user.role = User.CUSTOMER
             user.save()
+
+            # Send verification email
+            send_verification_email(request, user)
             messages.success(request, 'Your account has been registered succesfully!')
             return redirect('registerUser')
         else:
@@ -82,6 +85,10 @@ def registerVendor(request):
             user_profile = UserProfile.objects.get(user=user)
             vendor.user_profile = user_profile
             vendor.save()
+
+            # Send verification email
+            send_verification_email(request, user)
+
             messages.success(request, 'Your account has been registered succesfully! Please wait for the approval.')
             return redirect('registerVendor')
 
@@ -98,6 +105,11 @@ def registerVendor(request):
         'v_form': v_form,
     }
     return render(request, 'accounts/registerVendor.html', context)
+
+def activate(request, uidb64, token):
+    # Activate the user by setting the is_active status to True
+    return
+
 
 def login(request):
     if request.user.is_authenticated:
